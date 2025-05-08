@@ -18,6 +18,7 @@
       final.callPackage ./pkgs-by-name/globalprotect-openconnect/package.nix
         { };
     hardware-scan = final.callPackage ./pkgs-by-name/hardware-scan/package.nix { };
+    jsign = final.callPackage ./pkgs-by-name/jsign/package.nix { };
     ghaf-installer = final.callPackage ./pkgs-by-name/ghaf-installer/package.nix { };
     kernel-hardening-checker =
       final.callPackage ./pkgs-by-name/kernel-hardening-checker/package.nix

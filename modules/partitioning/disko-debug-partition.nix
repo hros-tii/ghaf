@@ -68,7 +68,6 @@ in
                     mountpoint = "/boot";
                     mountOptions = [
                       "umask=0077"
-                      "nofail"
                     ];
                   };
                   priority = 2;
@@ -96,7 +95,26 @@ in
                   };
                   priority = 4;
                 };
-                persist = {
+                persist = if config.ghaf.security.storage.encryption.enable then
+                {
+                  size = "100%";
+                  content = {
+                    type = "luks";
+                    name = "persist";
+                    settings.allowDiscards = true;
+                    content = {
+                      type = "filesystem";
+                      format = "btrfs";
+                      mountpoint = "/persist";
+                      mountOptions = [
+                        "noatime"
+                        "nodiratime"
+                      ];
+                    };
+                  };
+                }
+                else
+                {
                   size = "100%";
                   content = {
                     type = "filesystem";

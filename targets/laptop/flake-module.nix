@@ -95,6 +95,7 @@ let
           # TODO profiles.kernel-hardening.enable = true;
           reference.profiles.mvp-user-trial-extras.enable = true;
           partitioning.verity.enable = true;
+          security.storage.encryption.enable = true;
         };
       }
     ]))

@@ -124,6 +124,12 @@ xorriso="xorriso
  --sort-weight 0 /
 "
 
+echo "$xorriso" > "$out/xorriso.cmd"
+if [[ -n "$squashfsCommand" ]]; then
+    # (out="nix-store.squashfs" eval "$squashfsCommand")
+    echo "$squashfsCommand" > "$out/mksquashfs.cmd"
+fi
+
 $xorriso -output $out/iso/$isoName
 
 if test -n "$compressImage"; then

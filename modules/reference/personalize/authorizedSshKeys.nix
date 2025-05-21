@@ -33,6 +33,7 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIwGPH/oOrD1g15uiPV4gBKGk7f8ZBSyMEaptKOVs3NG jaroslawkurowski@TII-JaroslawKurowski"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHu4r7nCQ6A26HsE4+wIupvXAfVQHgBGXv0+epCho2/m rodrigo.pino@tii.ae"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGll9sWYdGc2xi9oQ25TEcI1D3T4n8MMXoMT+lJdE/KC milla@nixos"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDitlGmVnLwaXRIUpjxbbyVrt1h3mQlcTwPdL8nHm+dl hugo@Hugos-MacBook-Pro.local"
 
         # For ghaf-installer automated testing:
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAolaKCuIUBQSBFGFZI1taNX+JTAr8edqUts7A6k2Kv7"

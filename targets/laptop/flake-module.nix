@@ -58,6 +58,7 @@ let
         ghaf = {
           reference.profiles.mvp-user-trial.enable = true;
           partitioning.disko.enable = true;
+          profiles.graphics.idleManagement.enable = false;
         };
       }
     ]))
@@ -87,6 +88,7 @@ let
           reference.profiles.mvp-user-trial-extras.enable = true;
           partitioning.verity.enable = true;
           security.storage.encryption.enable = true;
+          profiles.graphics.idleManagement.enable = false;
         };
       }
     ]))

@@ -123,7 +123,7 @@ in
           in
           {
             device = 
-              if config.ghaf.security.storage.encryption.enable
+              if config.ghaf.storage.encryption.enable
               then "/dev/mapper/persist"
               else "/dev/disk/by-partuuid/${partConf.UUID}";
             fsType = partConf.Format;

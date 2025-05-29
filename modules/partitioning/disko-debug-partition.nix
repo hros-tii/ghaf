@@ -95,7 +95,7 @@ in
                   };
                   priority = 4;
                 };
-                persist = if config.ghaf.security.storage.encryption.enable then
+                persist = if config.ghaf.storage.encryption.enable then
                 {
                   size = "100%";
                   content = {

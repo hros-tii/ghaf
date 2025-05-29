@@ -115,7 +115,7 @@ in
             # When Encrypt is "key-file" and the key file isn't specified, the 
             # disk will be LUKS formatted with an empty passphrase
             Encrypt = 
-              if config.ghaf.security.storage.encryption.enable
+              if config.ghaf.storage.encryption.enable
               then "key-file"
               else "none";
 

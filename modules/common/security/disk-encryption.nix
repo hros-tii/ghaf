@@ -1,10 +1,10 @@
 { lib, config, pkgs, utils, ... }: 
 let
   inherit (lib) mkEnableOption mkIf;
-  cfg = config.ghaf.security.storage.encryption;
+  cfg = config.ghaf.storage.encryption;
 in
 {
-  options.ghaf.security.storage.encryption = {
+  options.ghaf.storage.encryption = {
     enable = mkEnableOption "Enable encryption of the data partition";
   };
 

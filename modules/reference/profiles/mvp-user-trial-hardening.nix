@@ -29,6 +29,14 @@ in
         profiles = {
           mvp-user-trial.enable = true;
         };
+
+        ## TEMP: testing
+        appvms.enable = lib.mkForce false;
+
+        services = {
+          enable = lib.mkForce false;
+        };
+        ## /TEMP: testing
       };
 
       storage.encryption.enable = false;
@@ -53,6 +61,19 @@ in
         guivm.extraModules = [ tpmRmPassthroughModule ];
         netvm.extraModules = [ tpmRmPassthroughModule ];
         adminvm.extraModules = [ tpmRmPassthroughModule ];
+
+        ## TEMP: testing
+        appvm = {
+          enable = lib.mkForce false;
+          vms = {
+            chrome.enable = lib.mkForce false;
+            gala.enable = lib.mkForce false;
+            zathura.enable = lib.mkForce false;
+            comms.enable = lib.mkForce false;
+            business.enable = lib.mkForce false;
+          };
+        };
+        ## /TEMP: testing
       };
 
       # disable plymouth: not integrated yet with LUKS PIN prompt

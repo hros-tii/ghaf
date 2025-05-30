@@ -172,7 +172,7 @@ in
     ghaf.virtualization.microvm = optionalAttrs fullVirtualization {
       # Netvm modules
       netvm.extraModules = optionals cfg.netvm.enable [
-        deviceModules.netvmPCIPassthroughModule
+        # deviceModules.netvmPCIPassthroughModule
         kernelConfigs.netvm
         firmwareModule
         serviceModules.wifi
@@ -197,8 +197,8 @@ in
       ];
       # Guivm modules
       guivm.extraModules = optionals cfg.guivm.enable [
-        deviceModules.guivmPCIPassthroughModule
-        deviceModules.guivmVirtioInputHostEvdevModule
+        # deviceModules.guivmPCIPassthroughModule
+        # deviceModules.guivmVirtioInputHostEvdevModule
         kernelConfigs.guivm
         firmwareModule
         qemuModules.guivm

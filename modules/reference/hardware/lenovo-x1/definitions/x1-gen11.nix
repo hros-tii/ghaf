@@ -41,14 +41,14 @@
 
   gpu = {
     pciDevices = [
-      {
-        # Passthrough Intel Iris GPU
-        path = "0000:00:02.0";
-        vendorId = "8086";
-        productId = "a7a1";
-        # opregion is required for type-c display to work
-        qemu.deviceExtraArgs = "x-igd-opregion=on";
-      }
+      # {
+      #   # Passthrough Intel Iris GPU
+      #   path = "0000:00:02.0";
+      #   vendorId = "8086";
+      #   productId = "a7a1";
+      #   # opregion is required for type-c display to work
+      #   qemu.deviceExtraArgs = "x-igd-opregion=on";
+      # }
     ];
     kernelConfig = {
       stage1.kernelModules = [ "i915" ];

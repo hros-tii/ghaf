@@ -23,16 +23,16 @@ let
         name = "GUIVM";
         qmpSocket = "/var/lib/microvms/gui-vm/gui-vm.sock";
         usbPassthrough = [
-          {
-            class = 3;
-            protocol = 1;
-            description = "HID Keyboard";
-          }
-          {
-            class = 3;
-            protocol = 2;
-            description = "HID Mouse";
-          }
+          # {
+          #   class = 3;
+          #   protocol = 1;
+          #   description = "HID Keyboard";
+          # }
+          # {
+          #   class = 3;
+          #   protocol = 2;
+          #   description = "HID Mouse";
+          # }
           {
             class = 11;
             description = "Chip/SmartCard (e.g. YubiKey)";
@@ -63,16 +63,16 @@ let
         name = "NetVM";
         qmpSocket = "/var/lib/microvms/net-vm/net-vm.sock";
         usbPassthrough = [
-          {
-            class = 2;
-            subclass = 6;
-            description = "Communications - Ethernet Networking";
-          }
-          {
-            vendorId = "0b95";
-            productId = "1790";
-            description = "ASIX Elec. Corp. AX88179 UE306 Ethernet Adapter";
-          }
+          # {
+          #   class = 2;
+          #   subclass = 6;
+          #   description = "Communications - Ethernet Networking";
+          # }
+          # {
+          #   vendorId = "0b95";
+          #   productId = "1790";
+          #   description = "ASIX Elec. Corp. AX88179 UE306 Ethernet Adapter";
+          # }
         ];
       }
       {
@@ -199,7 +199,7 @@ in
         Enable passthrough of non-USB input devices on startup using QEMU virtio-input-host-pci device.
       '';
       type = types.bool;
-      default = true;
+      default = false;
     };
 
     pcieBusPrefix = mkOption {

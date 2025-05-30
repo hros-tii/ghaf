@@ -101,7 +101,12 @@ in
                   content = {
                     type = "luks";
                     name = "persist";
-                    settings.allowDiscards = true;
+                    askPassword = false;
+                    initrdUnlock = false;
+                    settings = {
+                      allowDiscards = true;
+                      tryEmptyPassphrase = true;
+                    };
                     content = {
                       type = "filesystem";
                       format = "btrfs";

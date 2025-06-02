@@ -93,7 +93,8 @@ let
       {
         ghaf = {
           reference.profiles.mvp-user-trial-hardening.enable = true;
-          partitioning.verity.enable = true;
+          partitioning.disko.enable = true;
+          # partitioning.verity.enable = true;
         };
       }
     ]))

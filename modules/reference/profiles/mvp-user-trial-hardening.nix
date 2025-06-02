@@ -45,12 +45,15 @@ in
         tpmRmPassthroughModule = {
           security.tpm2.enable = true;
 
-          microvm.qemu.extraArgs = [
-            "-tpmdev"
-            "passthrough,id=tpmrm0,path=/dev/tpmrm0,cancel-path=/tmp/cancel"
-            "-device"
-            "tpm-tis,tpmdev=tpmrm0"
-          ];
+          microvm.qemu = {
+            extraArgs = [
+              "-tpmdev"
+              "passthrough,id=tpmrm0,path=/dev/tpmrm0,cancel-path=/tmp/cancel"
+              "-device"
+              "tpm-tis,tpmdev=tpmrm0"
+            ];
+            machine = "q35";
+          };
 
           environment.systemPackages = [
             pkgs.tpm2-tools
@@ -61,6 +64,7 @@ in
         guivm.extraModules = [ tpmRmPassthroughModule ];
         netvm.extraModules = [ tpmRmPassthroughModule ];
         adminvm.extraModules = [ tpmRmPassthroughModule ];
+        audiovm.extraModules = [ tpmRmPassthroughModule ];
 
         ## TEMP: testing
         appvm = {

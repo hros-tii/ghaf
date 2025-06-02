@@ -52,7 +52,7 @@ in
               "-device"
               "tpm-tis,tpmdev=tpmrm0"
             ];
-            machine = "q35";
+            machine = lib.mkForce "q35";
           };
 
           environment.systemPackages = [

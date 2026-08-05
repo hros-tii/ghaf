@@ -53,7 +53,7 @@ in
       # Make group kvm all devices that bind to vfio in iommu group 59
       SUBSYSTEM=="vfio",GROUP="kvm"
     '';
-    ghaf.hardware.nvidia.virtualization.enable = true;
+    ghaf.hardware.nvidia.virtualization.bpmp.enable = true;
 
     # Passthrough devices - use hardware.definition for composition model
     ghaf.hardware.definition.netvm.extraModules = [

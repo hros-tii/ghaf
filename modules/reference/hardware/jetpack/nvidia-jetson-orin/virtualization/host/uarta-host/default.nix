@@ -20,7 +20,7 @@ in
 
   config = lib.mkIf cfg.enable {
     ghaf.hardware.nvidia.virtualization = {
-      enable = true;
+      bpmp.enable = true;
       host.bpmp.enable = true;
     };
 

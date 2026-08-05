@@ -134,7 +134,7 @@ in
             }
             {
               name = "bpmp-virt proxy drivers";
-              patch = virt.sourcesPatch;
+              patch = virt.bpmp.sourcesPatch;
             }
             {
               name = "bpmp-virt core hooks";

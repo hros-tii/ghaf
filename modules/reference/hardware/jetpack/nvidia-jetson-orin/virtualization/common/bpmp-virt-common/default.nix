@@ -7,7 +7,7 @@
   ...
 }:
 let
-  cfg = config.ghaf.hardware.nvidia.virtualization;
+  cfg = config.ghaf.hardware.nvidia.virtualization.bpmp;
   kernelVersion = config.boot.kernelPackages.kernel.version;
 
   # The bpmp-virt proxy drivers are carried as ordinary source files under
@@ -41,7 +41,7 @@ in
 {
   _file = ./default.nix;
 
-  options.ghaf.hardware.nvidia.virtualization = {
+  options.ghaf.hardware.nvidia.virtualization.bpmp = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;

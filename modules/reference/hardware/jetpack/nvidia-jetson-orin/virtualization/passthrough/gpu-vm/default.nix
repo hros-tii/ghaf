@@ -118,8 +118,8 @@ in
     # ship a guest that can reach every SoC clock/power domain.
     assertions = [
       {
-        assertion = !config.ghaf.hardware.nvidia.virtualization.bpmpAllowAllDomains;
-        message = "gpu_vm passthrough requires the closed BPMP allow-list; ghaf.hardware.nvidia.virtualization.bpmpAllowAllDomains must stay false.";
+        assertion = !config.ghaf.hardware.nvidia.virtualization.bpmp.bpmpAllowAllDomains;
+        message = "gpu_vm passthrough requires the closed BPMP allow-list; ghaf.hardware.nvidia.virtualization.bpmp.bpmpAllowAllDomains must stay false.";
       }
     ];
 
@@ -287,7 +287,7 @@ in
             }
             {
               name = "bpmp-virt proxy drivers";
-              patch = virt.sourcesPatch;
+              patch = virt.bpmp.sourcesPatch;
             }
             {
               name = "bpmp-virt core hooks";

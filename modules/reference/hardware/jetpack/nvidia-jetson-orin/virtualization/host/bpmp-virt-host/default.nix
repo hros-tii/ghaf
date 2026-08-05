@@ -88,7 +88,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    ghaf.hardware.nvidia.virtualization.enable = true;
+    ghaf.hardware.nvidia.virtualization.bpmp.enable = true;
 
     # No QEMU override here. The BPMP guest bridge device is needed only by the
     # VM that receives a BPMP-backed passthrough device, and

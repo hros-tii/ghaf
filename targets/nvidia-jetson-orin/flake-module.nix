@@ -108,10 +108,27 @@ let
       hardwareModule = self.nixosModules.hardware-nvidia-jetson-orin-agx64;
       variant = "debug";
       extraModules = commonModules ++ [
-        { hardware.nvidia-jetpack.majorVersion = lib.mkForce "7"; }
+        {
+          hardware.nvidia-jetpack.majorVersion = lib.mkForce "7";
+        }
       ];
       extraConfig = {
         reference.profiles.mvp-orinuser-trial.enable = true;
+
+        hardware.nvidia.virtualization.bpmp.enable = lib.mkForce false;
+
+        hardware.nvidia.orin.kernelVersion = lib.mkForce "stable-6-18-pkvm";
+        hardware.nvidia.orin.agx.enableNetvmWlanPCIPassthrough = lib.mkForce false;
+
+        hardware.nvidia.passthroughs.mgbe0_net_vm.enable = lib.mkForce false;
+        hardware.nvidia.passthroughs.gpu_vm.enable = lib.mkForce false;
+      };
+      vmConfig = {
+        sysvms.netvm.extraModules = [
+          {
+            ghaf.virtualization.microvm.hypervisor = lib.mkForce "crosvm";
+          }
+        ];
       };
     })
 

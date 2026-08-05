@@ -28,6 +28,7 @@ _: {
     ];
 
     vm-modules.imports = [
+      ./common/hypervisor.nix
       ./common/microvm-store-mode.nix
       ./common/shared-directory.nix
       ./common/storagevm.nix

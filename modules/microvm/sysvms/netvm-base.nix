@@ -103,6 +103,8 @@ in
 
     # Networking
     virtualization.microvm = {
+      hypervisor = "qemu";
+
       swap.enable = true;
 
       vm-networking = {
@@ -127,6 +129,7 @@ in
           && ((globalConfig.platform.hostSystem or "") != "x86_64-linux");
         name = vmName;
       };
+
     };
 
     # Services
@@ -225,7 +228,6 @@ in
     optimize.enable = false;
     vcpu = lib.mkDefault 2;
     mem = lib.mkDefault 1024;
-    hypervisor = "qemu";
 
     shares = [
       {

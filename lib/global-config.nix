@@ -814,11 +814,11 @@ rec {
     # Build modules list with vmConfig applied
     #
     # This function collects modules from hardware.definition and vmConfig
-    # and builds a resource allocation module from vmConfig.mem/vcpu.
+    # and builds a VM settings module from the hypervisor and resource options.
     #
     # Module merge order (highest priority last):
     #   1. Base module (guivm-base.nix) - sets mkDefault values
-    #   2. resourceModule - applies vmConfig.mem/vcpu
+    #   2. vmSettingsModule - applies the hypervisor and vmConfig.mem/vcpu
     #   3. hwModules - hardware.definition.<vm>.extraModules
     #   4. vmConfigModules - vmConfig.sysvms.<vm>.extraModules (highest priority)
     #
@@ -843,19 +843,35 @@ rec {
 
         hwModules = hwDef.extraModules or [ ];
         vmConfigModules = vmCfg.extraModules or [ ];
+        selectedHypervisor =
+          if (vmCfg.hypervisor or null) != null then
+            vmCfg.hypervisor
+          else
+            config.ghaf.virtualization.vmConfig.defaultHypervisor;
+        hypervisor =
+          if (vmCfg.hypervisor or null) != null then selectedHypervisor else lib.mkDefault selectedHypervisor;
 
-        # Resource allocation module (applies vmConfig.mem/vcpu)
+        # VM settings module (applies the hypervisor and vmConfig.mem/vcpu)
         #
         # Merge inside `microvm`, not at the top level: `//` is a shallow
         # update, so combining { microvm.mem = ...; } with
         # { microvm.vcpu = ...; } would replace the whole microvm attrset and
         # silently drop mem whenever both are set.
-        resourceModule = {
-          microvm =
-            lib.optionalAttrs (vmCfg.mem or null != null) { inherit (vmCfg) mem; }
-            // lib.optionalAttrs (vmCfg.vcpu or null != null) { inherit (vmCfg) vcpu; };
+        vmSettingsModule = {
+          microvm = {
+            inherit hypervisor;
+          }
+          // lib.optionalAttrs (vmCfg.mem or null != null) { inherit (vmCfg) mem; }
+          // lib.optionalAttrs (vmCfg.vcpu or null != null) { inherit (vmCfg) vcpu; }
+          // lib.optionalAttrs (selectedHypervisor == "crosvm") {
+            # The host runs VMMs as the unprivileged `microvm` user. Crosvm's
+            # multiprocess minijail needs CAP_SYS_ADMIN to create PID and mount
+            # namespaces, so retain the unprivileged service boundary and use
+            # single-process mode until a capability-scoped sandbox is wired.
+            crosvm.extraArgs = lib.mkDefault [ "--disable-sandbox" ];
+          };
         };
       in
-      [ resourceModule ] ++ hwModules ++ vmConfigModules;
+      [ vmSettingsModule ] ++ hwModules ++ vmConfigModules;
   };
 }

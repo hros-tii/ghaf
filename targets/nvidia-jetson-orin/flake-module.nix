@@ -335,7 +335,7 @@ let
               }
             )
           ];
-        }).pkgs.nvidia-jetpack.flashScript;
+        }).pkgs.nvidia-jetpack.legacyFlashScript;
       withSB =
         (t.hostConfiguration.extendModules {
           modules = [
@@ -352,7 +352,7 @@ let
               }
             )
           ];
-        }).pkgs.nvidia-jetpack.flashScript;
+        }).pkgs.nvidia-jetpack.legacyFlashScript;
     in
     # Single `*-flash-script` entrypoint that picks between two
     # pre-built QSPI firmware variants at flash time.

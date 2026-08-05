@@ -320,7 +320,6 @@ let
   flashTarget =
     t: qspiOnly:
     let
-      innerName = t.hostConfiguration.config.hardware.nvidia-jetpack.name;
       noSB =
         (t.hostConfiguration.extendModules {
           modules = [
@@ -391,9 +390,9 @@ let
           esac
         done
         if [ "$signed" = 1 ]; then
-          exec ${withSB}/bin/flash-${innerName} "$@"
+          exec ${lib.getExe withSB} "$@"
         else
-          exec ${noSB}/bin/flash-${innerName} "$@"
+          exec ${lib.getExe noSB} "$@"
         fi
       '';
     };

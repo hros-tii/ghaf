@@ -271,6 +271,15 @@ in
         "qemu-xhci"
       ];
     };
+
+    crosvm = {
+      extraArgs = [
+        "--protected-vm-without-firmware"
+        "--unmap-guest-memory-on-fork"
+        "--disable-sandbox"
+        "--smccc-trng"
+      ];
+    };
   }
   // lib.optionalAttrs (globalConfig.storage.storeOnDisk.enable or false) (
     let

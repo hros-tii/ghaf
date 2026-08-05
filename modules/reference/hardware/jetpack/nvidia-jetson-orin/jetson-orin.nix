@@ -773,7 +773,7 @@ in
       cfg.flashScriptOverrides.signedArtifactsPath != null
     );
     hardware.nvidia-jetpack.firmware.eksFile = "${firmwareEkbImage}/eks_t234.img";
-    hardware.nvidia-jetpack.kernel.version = "${cfg.kernelVersion}";
+    hardware.nvidia-jetpack.kernel.releaseBranch = "${cfg.kernelVersion}";
     # jetpack-nixos hardcodes the trailing rootfs device as mmcblk0p1; replay
     # the same default here but route it through cfg.flashScriptOverrides.deviceDiskRootfsPartition
     # so per-SoM modules (e.g. orin-nx → nvme0n1p2) only set the option, not
@@ -783,6 +783,7 @@ in
       config.hardware.nvidia-jetpack.flashScriptOverrides.configFileName
       cfg.flashScriptOverrides.deviceDiskRootfsPartition
     ];
+    hardware.nvidia-jetpack.firmware.optee.ftpm.enable = true;
     nixpkgs.hostPlatform.system = "aarch64-linux";
 
     ghaf.givc.enable = true;

@@ -3,6 +3,7 @@
 {
   imports = [
     ./usb/external-devices.nix
+    ./crosvm.nix
     ./devices.nix
     ./input.nix
     ./kernel.nix

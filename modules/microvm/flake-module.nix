@@ -32,8 +32,8 @@ _: {
       ./common/microvm-store-mode.nix
       ./common/shared-directory.nix
       ./common/storagevm.nix
+      ./common/vm-hypervisor.nix
       ./common/vm-networking.nix
-      ./common/vm-qemu.nix
       ./common/vm-swap.nix
       ./common/vm-tpm.nix
       ./common/waypipe.nix

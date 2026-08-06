@@ -8,4 +8,8 @@
   imports = [ inputs.self.nixosModules.ghaf-qemu ];
 
   microvm.qemu.package = config.ghaf.virtualization.qemu.package;
+
+  microvm.crosvm.package = config.ghaf.virtualization.crosvm.package.overrideAttrs (oldAttrs: {
+    buildFeatures = oldAttrs.buildFeatures ++ config.ghaf.virtualization.crosvm.features;
+  });
 }

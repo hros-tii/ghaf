@@ -860,16 +860,10 @@ rec {
         vmSettingsModule = {
           microvm = {
             inherit hypervisor;
+            crosvm.extraArgs = vmCfg.crosvmExtraArgs;
           }
           // lib.optionalAttrs (vmCfg.mem or null != null) { inherit (vmCfg) mem; }
-          // lib.optionalAttrs (vmCfg.vcpu or null != null) { inherit (vmCfg) vcpu; }
-          // lib.optionalAttrs (selectedHypervisor == "crosvm") {
-            # The host runs VMMs as the unprivileged `microvm` user. Crosvm's
-            # multiprocess minijail needs CAP_SYS_ADMIN to create PID and mount
-            # namespaces, so retain the unprivileged service boundary and use
-            # single-process mode until a capability-scoped sandbox is wired.
-            crosvm.extraArgs = lib.mkDefault [ "--disable-sandbox" ];
-          };
+          // lib.optionalAttrs (vmCfg.vcpu or null != null) { inherit (vmCfg) vcpu; };
         };
       in
       [ vmSettingsModule ] ++ hwModules ++ vmConfigModules;

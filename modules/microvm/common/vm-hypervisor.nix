@@ -12,4 +12,10 @@
   microvm.crosvm.package = config.ghaf.virtualization.crosvm.package.overrideAttrs (oldAttrs: {
     buildFeatures = oldAttrs.buildFeatures ++ config.ghaf.virtualization.crosvm.features;
   });
+
+  # The host runs VMMs as the unprivileged `microvm` user. Crosvm's
+  # multiprocess minijail needs CAP_SYS_ADMIN to create PID and mount
+  # namespaces, so retain the unprivileged service boundary and use
+  # single-process mode until a capability-scoped sandbox is wired.
+  microvm.crosvm.extraArgs = [ "--disable-sandbox" ];
 }

@@ -79,6 +79,12 @@ let
         example = 4;
       };
 
+      crosvmExtraArgs = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Additional command line arguments to pass to crosvm invocation.";
+      };
+
       extraModules = mkOption {
         type = types.listOf types.unspecified;
         default = [ ];

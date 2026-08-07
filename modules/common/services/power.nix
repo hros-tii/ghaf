@@ -884,6 +884,17 @@ in
       ];
     })
 
+    (optionalAttrs (options ? microvm && options.microvm ? crosvm) {
+      microvm.crosvm.extraArgs = mkIf (cfg.gui.enable && cfg.vm.enable && cfg.gui.gpuSuspend) (lib.warn ''
+        The following qemu options are not ported to crosvm: [
+          "-chardev"
+          "socket,id=wake0,path=vm-wake.sock,server=on,wait=off"
+          "-device"
+          "isa-serial,chardev=wake0,index=1"
+        ];
+      '' [ ]);
+    })
+
     # Host power management
     (mkIf cfg.host.enable {
       # Host still handles power buttons in most situations

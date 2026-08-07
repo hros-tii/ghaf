@@ -92,5 +92,11 @@ in
         "tpm-tis,tpmdev=tpm0"
       ];
     })
+    (mkIf ((cfg.passthrough.enable || cfg.emulated.enable) && config.microvm.hypervisor == "crosvm") {
+      microvm.crosvm.extraArgs = lib.warn ''
+        The qemu flags "-tpmdev" and "-device tpm-tis" are not ported to crosvm.
+        TPM emulation/passthrough will not work for this VM.
+      '' [ ];
+    })
   ];
 }

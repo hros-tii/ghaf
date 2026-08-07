@@ -3,7 +3,12 @@
 #
 # Reference hardware modules
 #
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   _file = ./orin-agx.nix;
 
@@ -91,6 +96,12 @@
             "-fw_cfg"
             "name=opt/com.ghaf.hwinfo,file=/var/lib/ghaf-hwinfo/hwinfo.json"
           ];
+          microvm.crosvm.extraArgs = lib.warn ''
+            The following qemu options are not ported to crosvm: [
+              "-fw_cfg"
+              "name=opt/com.ghaf.hwinfo,file=/var/lib/ghaf-hwinfo/hwinfo.json"
+            ];
+          '' [ ];
         }
         ../../../personalize
         # Developer SSH access is a DEBUG-build affordance: this option defaults to

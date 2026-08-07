@@ -26,6 +26,7 @@ let
   # Get kernel/qemu configs (can be null)
   kernelConfig = hostConfig.kernel or null;
   qemuConfig = hostConfig.qemu or null;
+  crosvmConfig = hostConfig.crosvm or null;
 in
 {
   _file = ./hardware-passthrough.nix;
@@ -37,5 +38,7 @@ in
     ++ lib.optional (kernelConfig != null) kernelConfig
     # QEMU configuration from host (if defined)
     ++ lib.optional (qemuConfig != null) qemuConfig
+    # crosvm configuration from host (if defined)
+    ++ lib.optional (crosvmConfig != null) crosvmConfig
   );
 }

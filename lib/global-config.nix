@@ -722,6 +722,8 @@ rec {
         kernel = config.ghaf.kernel.${vmType} or null;
         # QEMU configuration for this VM type (if defined)
         qemu = config.ghaf.qemu.${vmType} or null;
+        # crosvm configuration for this VM type (if defined)
+        crosvm = config.ghaf.crosvm.${vmType} or null;
 
         # Hardware passthrough settings
         passthrough = {

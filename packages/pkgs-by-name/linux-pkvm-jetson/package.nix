@@ -31,7 +31,17 @@ buildLinux (
 
     features = { };
 
-    kernelPatches = args.kernelPatches or [ ];
+    kernelPatches = [
+      {
+        name = "usb: host: Export xhci_irq";
+        patch = ./0001-usb-host-Export-xhci_irq.patch;
+      }
+      {
+        name = "Hack-to-select-VIDEOBUF2_DMA_CONTIG";
+        patch = ./0002-Hack-to-select-VIDEOBUF2_DMA_CONTIG.patch;
+      }
+    ]
+    ++ args.kernelPatches or [ ];
 
     structuredExtraConfig =
       with lib.kernel;
@@ -39,8 +49,6 @@ buildLinux (
         # Override the default CMA_SIZE_MBYTES=32M setting in common-config.nix with the default from tegra_defconfig
         # Otherwise, nvidia's driver craps out
         CMA_SIZE_MBYTES = lib.mkForce (freeform "64");
-
-        VIRTIO_FS = module;
 
         ### So nat.service and firewall work ###
         NF_TABLES = module; # This one should probably be in common-config.nix
@@ -87,12 +95,22 @@ buildLinux (
         MD_RAID10 = module;
         MD_RAID456 = module;
 
+        # Needed for booting from USB
+        USB_UAS = module;
+
         FW_LOADER_COMPRESS_XZ = yes;
         FW_LOADER_COMPRESS_ZSTD = yes;
 
         # Restore default LSM from security/Kconfig. Undoes Nvidia downstream changes.
         LSM = freeform "landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf";
 
+        # drivers/media/platform/tegra/camera/vi/channel.c from
+        # linux-oot-modules has ifdefs for
+        # CONFIG_VIDEOBUF2_DMA_CONTIG, but actually requires it to
+        # function.
+        # Otherwise it hits a WARN_ON() and outputs
+        # > tegra-capture-vi: failed to initialize VB2 queue
+        VIDEOBUF2_DMA_CONTIG = yes;
       }
       // structuredExtraConfig;
   }

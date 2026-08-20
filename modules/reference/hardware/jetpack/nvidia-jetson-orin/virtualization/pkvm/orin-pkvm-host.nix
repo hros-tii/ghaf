@@ -3,6 +3,7 @@
 {
   config,
   lib,
+  pkgs,
   inputs,
   ...
 }:
@@ -92,6 +93,21 @@ let
       }
     );
   };
+
+  deviceInitNetworkScript = pkgs.writeShellApplication {
+    name = "deviceInitNetworkScript";
+    runtimeInputs = [
+      pkgs.iproute2
+      pkgs.systemd
+    ];
+    text = ''
+      ip addr replace 10.0.0.102/24 dev end0
+      ip route del default || true
+      ip route add default via 10.0.0.1
+      timedatectl ntp-servers end0 0.europe.pool.ntp.org
+      systemctl restart systemd-timesyncd
+    '';
+  };
 in
 {
   _file = ./orin-pkvm-host.nix;
@@ -120,5 +136,15 @@ in
     ghaf.hardware.nvidia.passthroughs.disp_vm.enable = lib.mkForce false;
 
     ghaf.hardware.nvidia.orin.agx.enableNetvmWlanPCIPassthrough = lib.mkForce false;
+
+    ## DEBUG
+
+    environment.systemPackages = [
+      deviceInitNetworkScript
+      pkgs.git
+      pkgs.gdb
+      pkgs.rustup
+      pkgs.rsync
+    ];
   };
 }

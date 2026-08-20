@@ -10,7 +10,8 @@
     ./passthrough/gpu-vm
     ./passthrough/disp-vm
     ./passthrough/gui-vm
-    ./pkvm/pkvm-host.nix
+    ./pkvm/orin-pkvm-guest.nix
+    ./pkvm/orin-pkvm-host.nix
     ./ownership-assertions.nix
   ];
 }

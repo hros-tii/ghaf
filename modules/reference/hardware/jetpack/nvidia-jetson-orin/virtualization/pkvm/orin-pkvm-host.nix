@@ -36,9 +36,7 @@ let
   jetpackHostKconfig =
     with lib.kernel;
     {
-      # Needed for booting from USB.
-      USB_UAS = module;
-      VIDEOBUF2_DMA_CONTIG = yes;
+      VIRTIO_FS = module;
       TCG_TIS = module;
       RTW89 = module;
       RTW89_8852CE = module;
@@ -96,7 +94,7 @@ let
   };
 in
 {
-  _file = ./pkvm-host.nix;
+  _file = ./orin-pkvm-host.nix;
 
   config = lib.mkIf (cfg.kernelVersion == "stable-6-18-pkvm") {
     nixpkgs.overlays = [

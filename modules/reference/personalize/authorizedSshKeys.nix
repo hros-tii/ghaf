@@ -41,6 +41,8 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHkq2GqA7XfW4JN8kiDLjaYf8j2zOsw1DABA7wLmk1qN janne.pirskanen@tii.ae"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFGzGy5vw2+bdwcGpQ7gwyiNvZ1HlolSHTP3tEUpzpoC emrah.billur@unikie.com"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIk35lv+XqSyMOF+mChNLGnc0/vCVrNicLg5ZGMwXsCe eyad.shaklab@tii.ae"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXGaXPZSSlCuaczjc3DWNUmZq7asjK2c6ZFNoKWZ/Aw eng@census-labs.com"
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDXvs8OVf/mnBXa7TL6ZiyCf7dKjDU3Eyg+5rjj2GeGqCrFktJ8L/ez/J4zDKgp8hvlsADvXQ5VlPOmLSH06v1i0StOO97h3luLURo2pUlpRt0c8e7L62ENnh+1t+GO9Dz3lDNUdxIDZd74NYHNEhqw77GQgH/Lr4l1mDl++Ueic74TK5NqEAcF34YdhMBP69dYliBmiFu+wNSXhCR2dpEgE8UGxFe5ZTXJ50ihQpjEmMZxqxcPbURVqf/f8QbMbV1RBdbNFbZ0VHTi9wKGZYcsOc4qa93KsYFoxLdh3OFG3pF8xPW4CkKC3erBezxJSOPCTJJMjxlq6qETRp3IEV79E4stz2viUcDQ9P9ipqpG146Kwa90R8GUqU1nNt78hi41FWZBOdgMpw6XL+ukpfqWUrY/y0bA3hJsiamEGBLRF8w+wI+xNLALoWvqiF9xxllZ1dyy4sbLKmpCuq24z73BvcFZEt3N31AR/VMxHr0r7CFLnWdPIpzgUmeMpiw6vL0= census@tii-server1"
 
         # For ghaf-installer automated testing:
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAolaKCuIUBQSBFGFZI1taNX+JTAr8edqUts7A6k2Kv7"

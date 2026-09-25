@@ -76,4 +76,5 @@ in
   ];
 
   ghaf.virtualization.crosvm.features = [ "vendor-devices" ];
+  ghaf.virtualization.crosvm.logLevel = "debug";
 }

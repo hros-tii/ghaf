@@ -44,5 +44,19 @@
         default.
       '';
     };
+
+    gdb = {
+      enable = lib.mkEnableOption ''
+        GDB debugging over local TCP.
+
+        Careful! enabling this feature causes the VM to pause its boot sequence and wait for a
+        GDB remote connection. It will not boot automatically on its own.
+      '';
+      port = lib.mkOption {
+        type = lib.types.int;
+        default = 9091;
+        description = "Listen port of the guest GDB server";
+      };
+    };
   };
 }

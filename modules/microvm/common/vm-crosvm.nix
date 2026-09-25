@@ -10,6 +10,7 @@ let
   cfg = config.ghaf.virtualization.crosvm;
 
   isCrosvm = config.microvm.hypervisor == "crosvm";
+  withGdb = isCrosvm && cfg.gdb.enable;
 
   crosvmPackage = cfg.package.overrideAttrs (oldAttrs: {
     cargoBuildFeatures = oldAttrs.cargoBuildFeatures ++ cfg.features;
@@ -40,6 +41,17 @@ in
   # only their console rendering avoids adding seconds to every guest shutdown.
   systemd.settings.Manager.ShowStatus = lib.mkIf isCrosvm false;
 
+  boot.kernelPatches = lib.optionals withGdb [
+    {
+      name = "Kernel debug symbols";
+      patch = null;
+      structuredExtraConfig = with lib.kernel; {
+        DEBUG_INFO = yes;
+        DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT = yes;
+      };
+    }
+  ];
+
   microvm.crosvm.package = if cfg.logLevel == null then crosvmPackage else crosvmWithLogLevel;
 
   microvm.crosvm.extraArgs =
@@ -52,5 +64,11 @@ in
     ++ lib.optionals pkgs.stdenv.hostPlatform.isAarch64 [
       "--core-scheduling"
       "false"
+    ]
+    ++ lib.optionals cfg.gdb.enable [
+      "--gdb"
+      "${lib.toString cfg.gdb.port}"
     ];
+
+  microvm.vcpu = lib.mkIf withGdb (lib.mkForce 1);
 }

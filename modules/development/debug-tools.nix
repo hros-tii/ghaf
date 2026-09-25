@@ -45,6 +45,15 @@ in
         # For comparing NixOS system closure differences between generations.
         # ghaf-rebuild runs this on the target to print its post-switch package diff.
         dix
+
+        dtc
+        gdb
+        git
+        iperf
+        pciutils
+        rsync
+        rustup
+        vim
       ]
       ++ rmDesktopEntries [
         htop

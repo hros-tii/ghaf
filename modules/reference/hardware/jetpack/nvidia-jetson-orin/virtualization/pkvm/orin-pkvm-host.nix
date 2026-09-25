@@ -110,5 +110,24 @@ in
 
     # Disable wait for plymouth since display is disabled
     ghaf.graphics.boot.enable = false;
+
+    ## DEBUG
+    networking = {
+      interfaces = {
+        end0 = {
+          useDHCP = false;
+          ipv4.addresses = [
+            {
+              address = "10.1.0.102";
+              prefixLength = 24;
+            }
+          ];
+        };
+      };
+      defaultGateway = {
+        address = "10.1.0.1";
+        interface = "end0";
+      };
+    };
   };
 }

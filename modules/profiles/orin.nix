@@ -39,6 +39,15 @@ let
   # imported, hence attrByPath -- same approach as
   # modules/common/security/audit/rules/host.nix.
   storeIsReadOnly = lib.attrByPath [ "ghaf" "partitioning" "verity" "enable" ] false config;
+
+  # sdimage.nix exports the ESP generator and the padded DTB it built the image
+  # with. It is absent on the verity targets, which drop format-module.nix and
+  # boot a UKI instead -- fall back to refreshing the loader binary only there.
+  espContents = config.system.build.mkESPContents or null;
+  espDtb = config.system.build.espDeviceTree or null;
+  espDtbPath = "${espDtb}/padded.dtb";
+  regenerateEsp = espContents != null && espDtb != null;
+
   ensureSystemProfile = pkgs.writeShellApplication {
     name = "ghaf-ensure-system-profile";
     runtimeInputs = [ pkgs.coreutils ];
@@ -458,27 +467,97 @@ in
     };
     environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
 
+    # NixOS's systemd-boot-builder.py cannot drive this ESP: its layout is
+    # produced at image build time by mk-esp-contents.py (see sdimage.nix), which
+    # writes a single `nixos-generation-1.conf` plus the kernel, initrd and DTB
+    # under EFI/nixos/. So the builder is replaced -- but the replacement has to
+    # regenerate those contents, not merely refresh the loader binary. A wrapper
+    # that only ran `bootctl install` left the ESP pointing at the *previous*
+    # generation's kernel, initrd and DTB, so `switch-to-configuration boot`
+    # reported success while the device kept booting the old system.
+    #
+    # switch-to-configuration invokes this as `installBootLoader <toplevel>`.
     system.build.installBootLoader = lib.mkForce (
       lib.getExe (
         pkgs.writeShellApplication {
           name = "install-bootloader-wrapper";
-          runtimeInputs = [ pkgs.systemd ];
+          runtimeInputs = [
+            pkgs.systemd
+            pkgs.coreutils
+            pkgs.util-linux
+            pkgs.gawk
+            pkgs.gnugrep
+          ];
           text = ''
+            esp=/boot
+
+            # The sd-image firmware partition is an MBR type 0x0c FAT, which
+            # bootctl does not recognise as an ESP; the flashed GPT partition
+            # does carry the EFI type GUID. Relaxing the check covers the
+            # former. What it must NOT cover is /boot having failed to mount at
+            # all -- bootctl would then happily populate a plain directory on
+            # the rootfs and still write EFI boot variables pointing at it,
+            # which reorders BootOrder in favour of an ESP that has nothing in
+            # it. Check for a real vfat mount first.
             export SYSTEMD_RELAX_ESP_CHECKS=1
+            if ! findmnt --noheadings --output FSTYPE --mountpoint "$esp" | grep -qx vfat; then
+              echo "[ghaf] $esp is not a mounted vfat filesystem -- refusing to install a bootloader" >&2
+              exit 1
+            fi
+
             echo "[ghaf] installing systemd-boot"
             # `install` is idempotent over an existing same-or-older loader, so
             # this fallback is for the cases it genuinely refuses: a newer
             # loader already present, ESP not found, EFI variables unwritable.
-            if ! bootctl --esp-path=/boot install; then
+            if ! bootctl --esp-path="$esp" install; then
               echo "[ghaf] bootctl install failed, attempting update" >&2
-              bootctl --esp-path=/boot update
+              bootctl --esp-path="$esp" update
             fi
+            ${lib.optionalString regenerateEsp ''
+              # Build the new ESP tree on the rootfs first. Generating straight
+              # into the ESP would leave it unbootable if the script failed
+              # halfway, and there is no room on a 256 MiB FAT to hold two
+              # generations side by side.
+              staging=$(mktemp -d)
+              trap 'rm -rf "$staging"' EXIT
+
+              echo "[ghaf] regenerating ESP contents for $1"
+              ${espContents} \
+                --toplevel "$1" \
+                --output "$staging" \
+                --device-tree ${espDtbPath}
+
+              entry="$staging/loader/entries/nixos-generation-1.conf"
+              if [ ! -f "$entry" ]; then
+                echo "[ghaf] mk-esp-contents wrote no loader entry" >&2
+                exit 1
+              fi
+              # Paths in a BLS entry are ESP-absolute, so they append cleanly to
+              # both the staging root and the ESP root.
+              linux_path=$(awk '$1 == "linux" { print $2 }' "$entry")
+              if [ -z "$linux_path" ] || [ ! -f "$staging/$linux_path" ]; then
+                echo "[ghaf] loader entry names a kernel that was not staged: ''${linux_path:-<none>}" >&2
+                exit 1
+              fi
+
+              # Drop the previous generation's kernel/initrd/DTB before copying,
+              # or the FAT fills up after a handful of switches. mk-esp-contents
+              # always writes exactly one generation, so nothing under EFI/nixos
+              # is worth keeping.
+              rm -rf "''${esp:?}/EFI/nixos"
+              cp -r "$staging/." "$esp/"
+
+              if [ ! -f "$esp/$linux_path" ]; then
+                echo "[ghaf] kernel missing from the ESP after copy: $linux_path" >&2
+                exit 1
+              fi
+            ''}
             # `update` exits 0 when there is nothing installed to update, so its
             # status cannot stand in for "a loader is present". Check the
             # postcondition directly, or a failed install reports success and
             # the device reboots without a bootloader.
             shopt -s nullglob
-            loaders=(/boot/EFI/systemd/systemd-boot*.efi)
+            loaders=("$esp"/EFI/systemd/systemd-boot*.efi)
             shopt -u nullglob
             if [ ''${#loaders[@]} -eq 0 ]; then
               echo "[ghaf] no systemd-boot binary in the ESP after install/update" >&2

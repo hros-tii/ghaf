@@ -120,11 +120,14 @@ def write_loader_entry(
         title="NixOS",
     )
     if machine_id:
-        entry += f"machine-id {machine_id}"
+        entry += f"machine-id {machine_id}\n"
 
+    # make_efi_name() already returns an absolute path (root defaults to "/"),
+    # exactly as for the `linux`/`initrd` keys interpolated into BOOT_ENTRY.
+    # Prefixing another slash here produced `devicetree //EFI/nixos/...`, which
+    # systemd-boot turns into the malformed `\\EFI\nixos\...`.
     if device_tree:
-        dt = make_efi_name(device_tree)
-        entry += f"\ndevicetree /{dt}"
+        entry += f"devicetree {make_efi_name(device_tree)}\n"
 
     write_file(os.path.join(esp, "loader/entries/nixos-generation-1.conf"), entry)
     write_file(os.path.join(esp, "loader/loader.conf"), LOADER_CONF)

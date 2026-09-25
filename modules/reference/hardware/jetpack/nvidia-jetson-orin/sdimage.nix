@@ -48,9 +48,70 @@ let
   cfg = config.ghaf.image.sdcard;
   inherit (pkgs.stdenv.hostPlatform) efiArch;
   fdtPath = "${config.hardware.deviceTree.package}/${config.hardware.deviceTree.name}";
+
+  # Every DTB handed to a boot loader has to carry slack space. Both sd-stub
+  # (UKI) and sd-boot (Type #1 `devicetree`) install the blob into the EFI
+  # configuration table through NVIDIA's EFI_DT_FIXUP_PROTOCOL, which appends
+  # /chosen and reserved-memory nodes in place. With a blob whose totalsize
+  # equals its used size the fixup runs out of room and the EFI stub rejects the
+  # result with "Invalid header detected on UEFI supplied FDT, ignoring", then
+  # boots with an empty DTB -- on Tegra that means no memory nodes and no
+  # console, i.e. a silent hang.
+  #
+  # `hardware.deviceTree.package` itself is deliberately left unpadded: on t234
+  # there is no kernel-dtb partition, and jetpack-nixos instead copies that same
+  # tree into the flash workdir (device-pkgs/flash-script.nix, `cp -r
+  # ${dtbsDir}/. kernel/dtb/`), from where NVIDIA's tooling concatenates it onto
+  # the UEFI image as `*_with_dtb.bin` and writes the result to the QSPI
+  # A_/B_cpu-bootloader partitions. Padding here would change the firmware image
+  # itself -- a far wider blast radius than the copy on the ESP.
+  paddedDtb =
+    pkgs.runCommand "padded-dtb"
+      {
+        nativeBuildInputs = [ pkgs.dtc ];
+      }
+      ''
+        mkdir -p $out
+        dtc -I dtb -O dtb -p ${toString cfg.dtbPadding} -o $out/padded.dtb ${fdtPath}
+      '';
+  paddedFdtPath = "${paddedDtb}/padded.dtb";
+
+  # mk-esp-contents.py is needed twice with two different interpreters:
+  #
+  #   * at image build time, where it runs on the *build* platform, and
+  #   * at `switch-to-configuration` time on the device, where it runs on the
+  #     *host* platform (see system.build.mkESPContents below).
+  #
+  # A cross build from x86_64 would otherwise bake an x86_64 python shebang into
+  # the script shipped to the Orin.
+  mkESPContentWith =
+    python3:
+    pkgs.runCommand "mk-esp-contents"
+      {
+        nativeBuildInputs = [
+          pkgs.mypy
+          pkgs.python3
+        ];
+      }
+      ''
+        install -m755 ${pkgs.replaceVars ./mk-esp-contents.py { inherit python3; }} $out
+        mypy \
+          --no-implicit-optional \
+          --disallow-untyped-calls \
+          --disallow-untyped-defs \
+          $out
+      '';
 in
 {
-  imports = [ (modulesPath + "/installer/sd-card/sd-image.nix") ];
+  imports = [
+    (modulesPath + "/installer/sd-card/sd-image.nix")
+    # dtbPadding is no longer UKI-specific: the Type #1 ESP path needs the same
+    # headroom, so the option moved up one level.
+    (lib.mkRenamedOptionModule
+      [ "ghaf" "image" "sdcard" "uki" "dtbPadding" ]
+      [ "ghaf" "image" "sdcard" "dtbPadding" ]
+    )
+  ];
 
   options.ghaf.image.sdcard.uki = {
     enable = lib.mkOption {
@@ -70,69 +131,43 @@ in
       '';
     };
 
-    dtbPadding = lib.mkOption {
-      type = lib.types.int;
-      default = 65536;
-      description = ''
-        Extra padding bytes added to the device tree blob.
-        systemd-stub needs room in the FDT for runtime modifications
-        (e.g. adding /chosen properties). Increase if firmware rejects
-        the DTB with "Invalid header detected on UEFI supplied FDT".
-      '';
-    };
+  };
+
+  options.ghaf.image.sdcard.dtbPadding = lib.mkOption {
+    type = lib.types.int;
+    default = 65536;
+    description = ''
+      Extra padding bytes added to the device tree blob placed on the ESP.
+
+      Both systemd-stub (UKI) and systemd-boot (Type #1 `devicetree` line) need
+      room in the FDT for runtime modifications (e.g. adding /chosen
+      properties) applied through NVIDIA's EFI_DT_FIXUP_PROTOCOL. Increase if
+      firmware rejects the DTB with "Invalid header detected on UEFI supplied
+      FDT".
+    '';
   };
 
   config = {
     boot.loader.grub.enable = false;
     hardware.enableAllHardware = lib.mkForce false;
 
-    # Jetson-specific UKI build configuration
-    boot.uki.settings = lib.mkIf cfg.uki.enable (
-      let
-        # When packed in a UKI, the dtb needs some padding to avoid error:
-        # "Invalid header detected on UEFI supplied FDT"
-        # The default value of 64K for dtbPadding should be more than enough.
-        paddedDtb =
-          pkgs.runCommand "padded-dtb"
-            {
-              nativeBuildInputs = [ pkgs.dtc ];
-            }
-            ''
-              mkdir -p $out
-              dtc -I dtb -O dtb -p ${toString cfg.uki.dtbPadding} -o $out/padded.dtb ${fdtPath}
-            '';
-      in
-      {
-        UKI = {
-          DeviceTree = "${paddedDtb}/padded.dtb";
-        };
-      }
-    );
+    # Jetson-specific UKI build configuration. The padding rationale lives with
+    # `paddedDtb` above; the Type #1 path below uses the very same blob.
+    boot.uki.settings = lib.mkIf cfg.uki.enable {
+      UKI = {
+        DeviceTree = paddedFdtPath;
+      };
+    };
+
+    # Consumed by the Orin profile's installBootLoader wrapper so a runtime
+    # switch regenerates the ESP with the same script and the same padded DTB
+    # the image was built with.
+    system.build.mkESPContents = mkESPContentWith pkgs.python3;
+    system.build.espDeviceTree = paddedDtb;
 
     sdImage =
       let
-        # TODO do we really need replaceVars just to set the python string in the
-        # shbang?
-        mkESPContentSource = pkgs.replaceVars ./mk-esp-contents.py {
-          inherit (pkgs.buildPackages) python3;
-        };
-        mkESPContent =
-          pkgs.runCommand "mk-esp-contents"
-            {
-              nativeBuildInputs = with pkgs; [
-                mypy
-                python3
-              ];
-            }
-            ''
-              install -m755 ${mkESPContentSource} $out
-              mypy \
-                --no-implicit-optional \
-                --disallow-untyped-calls \
-                --disallow-untyped-defs \
-                $out
-            '';
-        # fdtPath = "${config.hardware.deviceTree.package}/${config.hardware.deviceTree.name}";
+        mkESPContent = mkESPContentWith pkgs.buildPackages.python3;
       in
       {
         firmwareSize = if cfg.uki.enable then 512 else 256;
@@ -172,7 +207,7 @@ in
               ${mkESPContent} \
                 --toplevel ${config.system.build.toplevel} \
                 --output firmware/ \
-                --device-tree ${fdtPath}
+                --device-tree ${paddedFdtPath}
             '';
 
         # Register the closure in the image's Nix DB at build time.

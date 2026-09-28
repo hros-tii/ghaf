@@ -37,6 +37,8 @@
       flatpak.enable = lib.mkForce false;
     };
 
+    ghaf.hardware.nvidia.passthroughs.mgbe0_net_vm.enable = lib.mkForce false;
+
     # Apply the protected guest config to all Orin VMs
     ghaf.virtualization.vmConfig =
       let

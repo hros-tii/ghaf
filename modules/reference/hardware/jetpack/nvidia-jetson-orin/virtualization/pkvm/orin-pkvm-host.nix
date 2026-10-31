@@ -14,6 +14,7 @@ let
     argsOverride.defconfig = "debug_defconfig";
 
     structuredExtraConfig = with lib.kernel; {
+      PKVM_GUEST_TO_GUEST = yes;
       VIRTIO_FS = module;
       TCG_TIS = module;
       RTW89 = module;
@@ -88,9 +89,11 @@ in
       }
     ];
 
+    hardware.nvidia-jetpack.firmware.optee.ftpm.enable = true;
     boot.kernelParams = [
       "pkvm.assign_permissive=1"
       "kvm-arm.hyp_iommu_pages=86016" # 0x15000
+      "kvm-arm.host_s2=cma"
     ];
 
     # The Realtek nvidia-oot driver is disabled and replaced by the mainline driver

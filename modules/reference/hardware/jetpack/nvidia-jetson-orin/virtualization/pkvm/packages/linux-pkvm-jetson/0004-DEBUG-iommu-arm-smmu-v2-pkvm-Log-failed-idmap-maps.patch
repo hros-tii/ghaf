@@ -1,0 +1,31 @@
+From a14b0fa3a7245b29e6250dd7d2c5dbc1d0dfd97f Mon Sep 17 00:00:00 2001
+From: Panos Grammenos <p.grammenos@tii.ae>
+Date: Thu, 22 Oct 2026 17:40:41 +0300
+Subject: [PATCH] DEBUG: iommu/arm-smmu-v2-pkvm: Log failed idmap maps
+
+Not for merging.
+
+---
+ drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c b/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
+index f03864f42f4f..1e6fd50183ab 100644
+--- a/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
++++ b/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
+@@ -2533,8 +2533,11 @@ static int smmu_host_stage2_idmap(phys_addr_t start, phys_addr_t end, int prot)
+ 			 * Failing to map isn't compromising security. Make sure we don't crash for
+ 			 * that.
+ 			 */
+-			if (ret || !mapped)
++			if (ret || !mapped) {
++				drv_err("idmap map failed: start=0x%llx left=0x%llx pgsize=0x%llx ret=%d",
++					(u64)start, (u64)size, (u64)pgsize, ret);
+ 				return 0;
++			}
+ 
+ 			size -= mapped;
+ 			start += mapped;
+-- 
+2.43.0
+

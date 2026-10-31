@@ -11,6 +11,8 @@ let
     argsOverride.defconfig = "guest_defconfig";
 
     structuredExtraConfig = with lib.kernel; {
+      PKVM_GUEST_TO_GUEST = yes;
+      PKVM_GUEST_TO_GUEST_SELFTEST = yes;
       GOLDFISH = lib.kernel.yes;
       BATTERY_GOLDFISH = lib.kernel.module;
       # virtio device support

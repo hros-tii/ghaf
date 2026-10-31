@@ -7,6 +7,7 @@
 {
   nvidia-jetpack7,
   fetchFromGitHub,
+  applyPatches,
   structuredExtraConfig ? { },
   argsOverride ? { },
   ...
@@ -18,14 +19,20 @@ nvidia-jetpack7.kernel.override {
     args
     // {
       pname = "linux-pkvm-jetson";
-      version = "6.18.0";
-      extraMeta.branch = "pkvm-v6.18-dev";
+      version = "6.18.58";
+      extraMeta.branch = "pkvm-stable-dev";
 
-      src = fetchFromGitHub {
-        owner = "tiiuae";
-        repo = "linux-pkvm-jetson";
-        rev = "635111311b0977bf463ffe1174bbd69041bde66f"; # pkvm-6.18-dev - 07-10-2026
-        hash = "sha256-tF4oyAqWZ56mVUIY1sMQfaacw3ESmJ5Op6KHP+uhsZU=";
+      src = applyPatches {
+        name = "linux-pkvm-jetson-src";
+        patches = [
+          ./0004-DEBUG-iommu-arm-smmu-v2-pkvm-Log-failed-idmap-maps.patch
+        ];
+        src = fetchFromGitHub {
+          owner = "tiiuae";
+          repo = "linux-pkvm-jetson";
+          rev = "ce1252b592f632a8d1402a1d52b72e65b2677d5b"; # pkvm-stable-dev - 22-10-2026
+          hash = "sha256-Cb63nx1iJpP4OYH5EVpne9fiKLfvYMZF79Pf5kQojNs=";
+        };
       };
     }
     // argsOverride;

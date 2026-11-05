@@ -173,6 +173,11 @@ in
                 --toplevel ${config.system.build.toplevel} \
                 --output firmware/ \
                 --device-tree ${fdtPath}
+              # Extra ESP files (e.g. systemd-boot drop-in drivers).
+              ${lib.concatStrings (lib.mapAttrsToList (dst: src: ''
+                mkdir -pv "firmware/$(dirname ${dst})"
+                cp -v ${src} firmware/${dst}
+              '') config.boot.loader.systemd-boot.extraFiles)}
             '';
 
         # Register the closure in the image's Nix DB at build time.

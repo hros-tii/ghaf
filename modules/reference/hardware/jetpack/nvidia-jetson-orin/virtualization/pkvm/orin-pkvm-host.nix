@@ -87,9 +87,23 @@ in
         # SoCs / carrier boards that may not have the referenced labels.
         filter = config.hardware.deviceTree.name;
       }
+      {
+        name = "pkvm_guest_firmware";
+        dtsFile = ./pvmfw-region-overlay.dts;
+        filter = config.hardware.deviceTree.name;
+      }
     ];
 
     hardware.nvidia-jetpack.firmware.optee.ftpm.enable = true;
+
+    # pvmfw owned by pKVM: pvmfw-loader fills its region (pvmfw-region-overlay.dts)
+    # before Linux starts.
+    boot.loader.systemd-boot.extraFiles = {
+      "EFI/systemd/drivers/pvmfw-loaderaa64.efi" =
+        "${pkgs.callPackage ./pvmfw-loader { }}/pvmfw-loader.efi";
+      "EFI/pvmfw/pvmfw.bin" = ./pvmfw.bin;
+    };
+
     boot.kernelParams = [
       "pkvm.assign_permissive=1"
       "kvm-arm.hyp_iommu_pages=86016" # 0x15000

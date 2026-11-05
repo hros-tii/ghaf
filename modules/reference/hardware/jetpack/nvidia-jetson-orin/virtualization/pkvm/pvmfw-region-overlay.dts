@@ -1,0 +1,22 @@
+// SPDX-FileCopyrightText: 2022-2026 TII (SSRC) and the Ghaf contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// The region pKVM takes pvmfw from. pvmfw-loader fills it before Linux starts.
+// The size is crosvm's guest firmware window: pKVM copies the whole region in.
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "nvidia,tegra234";
+
+	fragment@0 {
+		target-path = "/reserved-memory";
+		__overlay__ {
+			pkvm-guest-firmware@500000000 {
+				compatible = "linux,pkvm-guest-firmware-memory";
+				reg = <0x5 0x00000000 0x0 0x00400000>;
+				no-map;
+			};
+		};
+	};
+};

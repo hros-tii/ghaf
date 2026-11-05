@@ -30,8 +30,8 @@ nvidia-jetpack7.kernel.override {
         src = fetchFromGitHub {
           owner = "tiiuae";
           repo = "linux-pkvm-jetson";
-          rev = "ce1252b592f632a8d1402a1d52b72e65b2677d5b"; # pkvm-stable-dev - 22-10-2026
-          hash = "sha256-Cb63nx1iJpP4OYH5EVpne9fiKLfvYMZF79Pf5kQojNs=";
+          rev = "aa7e08d26d531fbe31448026041b8e6d2d531c64"; # pkvm-stable-dev - 22-10-2026
+          hash = "sha256-LWKNKQkwIdg4LjegI/3wasmP3rg3THmwr5RAT/u7SBo=";
         };
       };
     }

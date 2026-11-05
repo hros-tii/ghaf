@@ -52,8 +52,21 @@
           # and any leftover sliver would be ordinary non-identity memory.
           guivm.mem = 13312;
 
-          netvm.extraModules = [ guestConfig ];
-          adminvm.extraModules = [ guestConfig ];
+          netvm.extraModules = [
+            guestConfig
+            { microvm.kernelParams = [ "ignore_loglevel" ]; }
+          ];
+          adminvm.extraModules = [
+            guestConfig
+            ./admin-vm-avb.nix
+            {
+              microvm.kernelParams = [
+                "ignore_loglevel"
+                "earlycon=uart8250,mmio,0x3f8"
+                "keep_bootcon"
+              ];
+            }
+          ];
           guivm.extraModules = [ guestConfig ];
         };
         appvms = {

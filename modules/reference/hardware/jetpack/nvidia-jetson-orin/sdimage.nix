@@ -172,11 +172,11 @@ in
               ${mkESPContent} \
                 --toplevel ${config.system.build.toplevel} \
                 --output firmware/ \
-                --device-tree ${fdtPath}
+                ${lib.optionalString (!(config.boot.loader.systemd-boot.extraFiles ? "EFI/BOOT/BOOTAA64.efi")) "--device-tree ${fdtPath}"}
               # Extra ESP files (e.g. systemd-boot drop-in drivers).
               ${lib.concatStrings (lib.mapAttrsToList (dst: src: ''
                 mkdir -pv "firmware/$(dirname ${dst})"
-                cp -v ${src} firmware/${dst}
+                cp -fv ${src} firmware/${dst}
               '') config.boot.loader.systemd-boot.extraFiles)}
             '';
 

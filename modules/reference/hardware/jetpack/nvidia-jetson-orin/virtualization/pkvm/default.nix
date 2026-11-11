@@ -54,11 +54,18 @@
 
           netvm.extraModules = [
             guestConfig
-            { microvm.kernelParams = [ "ignore_loglevel" ]; }
+            (import ./pvmfw-vm.nix "net-vm")
+            {
+              microvm.kernelParams = [
+                "ignore_loglevel"
+                "earlycon=uart8250,mmio,0x3f8"
+                "keep_bootcon"
+              ];
+            }
           ];
           adminvm.extraModules = [
             guestConfig
-            ./admin-vm-avb.nix
+            (import ./pvmfw-vm.nix "admin-vm")
             {
               microvm.kernelParams = [
                 "ignore_loglevel"

@@ -74,7 +74,17 @@
               ];
             }
           ];
-          guivm.extraModules = [ guestConfig ];
+          guivm.extraModules = [
+            guestConfig
+            (import ./pvmfw-vm.nix "gui-vm")
+            {
+              microvm.kernelParams = [
+                "ignore_loglevel"
+                "earlycon=uart8250,mmio,0x3f8"
+                "keep_bootcon"
+              ];
+            }
+          ];
         };
         appvms = {
           chromium.extraModules = [ guestConfig ];

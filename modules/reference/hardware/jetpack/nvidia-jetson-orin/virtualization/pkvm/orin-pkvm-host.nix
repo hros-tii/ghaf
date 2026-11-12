@@ -100,6 +100,7 @@ in
     "EFI/BOOT/BOOTAA64.efi" = ./andre-loader/pvmfw-loader.efi;
     "EFI/pvmfw/pvmfw.bin" = ./pvmfw.bin;
     "EFI/pvmfw/pvmfw.sig" = ./andre-loader/pvmfw.sig;
+    "EFI/pvmfw/vm.dtbo" = ./andre-loader/vm.dtbo;
   };
 
     boot.kernelParams = [

@@ -6,7 +6,7 @@
 # VM's identity salt). One pair per VM, never shared.
 { lib, pkgs, ... }:
 let
-  vms = [ "admin-vm" "net-vm" ];
+  vms = [ "admin-vm" "net-vm" "gui-vm" ];
   mk = vm: lib.nameValuePair "pvmfw-instance-${vm}" {
     description = "pvmfw instance.img and instance_id.dtbo for ${vm}";
     wantedBy = [ "microvm@${vm}.service" ];

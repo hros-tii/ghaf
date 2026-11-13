@@ -12,6 +12,8 @@ let
 
     structuredExtraConfig = with lib.kernel; {
       PKVM_GUEST_TO_GUEST = yes;
+      # /dev/open-dice0: the DICE data pvmfw hands over in /reserved-memory/dice.
+      OPEN_DICE = yes;
       PKVM_GUEST_TO_GUEST_SELFTEST = yes;
       GOLDFISH = lib.kernel.yes;
       BATTERY_GOLDFISH = lib.kernel.module;

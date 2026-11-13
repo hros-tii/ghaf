@@ -13,8 +13,9 @@
 // own DICE certificate, read from /dev/open-dice0.
 //
 // The agent greets every listed peer that is alive (HELLO, answered with
-// HELLO_ACK), again whenever it comes back with a new incarnation, and drops
-// anything sent by a VM that is not listed. Keep the peers file and this
+// HELLO_ACK), repeating it until acknowledged and again whenever the peer comes
+// back with a new incarnation, and drops anything sent by a VM that is not
+// listed. Keep the peers file and this
 // binary in the signed initrd: the rootfs is not authenticated.
 #include <errno.h>
 #include <fcntl.h>
@@ -321,7 +322,11 @@ static int read_auth_hash(const char *dev, uint8_t out[64])
 
 struct peer {
 	char name[NAME_MAX_LEN];
-	struct pkvm_g2g_ident id;	/* incarnation: the one last greeted, 0 if none */
+	struct pkvm_g2g_ident id;	/* id_lo/id_hi from the name; incarnation unused */
+	uint64_t live;			/* incarnation last seen alive, 0 if none */
+	int acked;			/* that incarnation acknowledged our HELLO */
+	unsigned long next_hello;	/* tick of the next HELLO while unacknowledged */
+	struct pkvm_g2g_ident ack_to;	/* HELLO to acknowledge; incarnation 0 if none */
 };
 
 static void hex(const uint8_t *p, size_t n, char *out)
@@ -358,7 +363,6 @@ static int load_peers(const char *path, const uint8_t auth[64], struct peer *pee
 		}
 		strcpy(peers[n].name, s);
 		peers[n].id = name_to_ident(auth, s);
-		peers[n].id.incarnation = 0;
 		n++;
 	}
 	fclose(f);
@@ -380,26 +384,53 @@ static int send_msg(int fd, struct pkvm_g2g_ident to, uint64_t kind, uint64_t ar
 	return ioctl(fd, PKVM_G2G_IOC_MSG_SEND, &m);
 }
 
-/* Greets each listed peer that is alive under an incarnation not yet greeted. */
-static void greet(int fd, const struct pkvm_g2g_ident *me, struct peer *peers, int n)
+/* Sends a pending HELLO_ACK; a full mailbox (EAGAIN) leaves it for the next tick. */
+static void send_ack(int fd, struct peer *p)
+{
+	if (!p->ack_to.incarnation)
+		return;
+	if (send_msg(fd, p->ack_to, MSG_HELLO_ACK, 0) == 0)
+		p->ack_to.incarnation = 0;
+	else if (errno != EAGAIN) {
+		fprintf(stderr, "HELLO_ACK to %s: %s\n", p->name, strerror(errno));
+		p->ack_to.incarnation = 0;
+	}
+}
+
+/*
+ * Greets each listed peer that is alive, and repeats the HELLO every
+ * HELLO_RETRY ticks until that incarnation acknowledges it: a message can be
+ * refused while the peer's mailbox is full, or sent before its agent runs.
+ */
+#define HELLO_RETRY	10
+
+static void greet(int fd, const struct pkvm_g2g_ident *me, struct peer *peers, int n,
+		  unsigned long tick)
 {
 	for (int i = 0; i < n; i++) {
-		struct pkvm_g2g_ident id = peers[i].id;
+		struct peer *p = &peers[i];
+		struct pkvm_g2g_ident id = p->id;
 
 		if (id.id_lo == me->id_lo && id.id_hi == me->id_hi)
 			continue;		/* this VM is in its own list */
-		if (ioctl(fd, PKVM_G2G_IOC_LOOKUP, &id) < 0 || !id.incarnation)
-			continue;		/* not running */
-		if (id.incarnation == peers[i].id.incarnation)
-			continue;		/* already greeted */
-		if (send_msg(fd, id, MSG_HELLO, me->incarnation) < 0) {
-			if (errno != EAGAIN)
-				fprintf(stderr, "HELLO to %s: %s\n", peers[i].name, strerror(errno));
-			continue;		/* retried on the next tick */
+		send_ack(fd, p);
+		id.incarnation = 0;
+		if (ioctl(fd, PKVM_G2G_IOC_LOOKUP, &id) < 0 || !id.incarnation) {
+			p->live = 0;		/* not running */
+			continue;
 		}
-		printf("%s (incarnation %llu): HELLO sent\n", peers[i].name,
-		       (unsigned long long)id.incarnation);
-		peers[i].id.incarnation = id.incarnation;
+		if (id.incarnation != p->live) {
+			p->live = id.incarnation;
+			p->acked = 0;
+			p->next_hello = tick;
+			printf("%s (incarnation %llu): alive\n", p->name,
+			       (unsigned long long)p->live);
+		}
+		if (p->acked || tick < p->next_hello)
+			continue;
+		if (send_msg(fd, id, MSG_HELLO, me->incarnation) < 0 && errno != EAGAIN)
+			fprintf(stderr, "HELLO to %s: %s\n", p->name, strerror(errno));
+		p->next_hello = tick + HELLO_RETRY;
 	}
 }
 
@@ -426,12 +457,15 @@ static void handle_messages(int fd, struct peer *peers, int n)
 		case MSG_HELLO:
 			printf("%s (incarnation %llu): HELLO received\n", p->name,
 			       (unsigned long long)m.peer.incarnation);
-			if (send_msg(fd, m.peer, MSG_HELLO_ACK, 0) < 0)
-				fprintf(stderr, "HELLO_ACK to %s: %s\n", p->name, strerror(errno));
+			p->ack_to = m.peer;
+			send_ack(fd, p);
 			break;
 		case MSG_HELLO_ACK:
-			printf("%s (incarnation %llu): HELLO acknowledged\n", p->name,
-			       (unsigned long long)m.peer.incarnation);
+			if (m.peer.incarnation == p->live && !p->acked) {
+				p->acked = 1;
+				printf("%s (incarnation %llu): HELLO acknowledged\n", p->name,
+				       (unsigned long long)m.peer.incarnation);
+			}
 			break;
 		default:
 			printf("%s: ignored message kind %#llx\n", p->name,
@@ -442,8 +476,9 @@ static void handle_messages(int fd, struct peer *peers, int n)
 
 int main(int argc, char **argv)
 {
-	struct peer peers[MAX_PEERS];
+	struct peer peers[MAX_PEERS] = { 0 };
 	struct pkvm_g2g_ident me;
+	unsigned long tick = 0;
 	uint8_t auth[64];
 	char auth_hex[129];
 	int fd, n;
@@ -482,9 +517,9 @@ int main(int argc, char **argv)
 		printf("  peer %s = %#llx:%#llx\n", peers[i].name,
 		       (unsigned long long)peers[i].id.id_hi, (unsigned long long)peers[i].id.id_lo);
 
-	for (;;) {
-		greet(fd, &me, peers, n);
+	for (;; tick++) {
 		handle_messages(fd, peers, n);
+		greet(fd, &me, peers, n, tick);
 		usleep(TICK_US);
 	}
 }

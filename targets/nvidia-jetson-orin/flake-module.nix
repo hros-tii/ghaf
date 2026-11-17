@@ -751,6 +751,21 @@ let
   # eval, which is where the eval memory goes. Flash a `nodemoapps` image with the
   # base target's script and `-s <image>`.
   flashCrossTargets = builtins.filter (t: !(t.isNoDemoApps or false)) crossTargets;
+
+  # Native flasher on aarch64.
+  flashWithImage =
+    t:
+    let
+      inherit (t.hostConfiguration) config pkgs;
+    in
+    pkgs.writeShellApplication {
+      name = "flash-ghaf-host";
+      text = ''
+        SIGNED_SD_IMAGE_DIR=${config.system.build.ghafImage} \
+          exec ${lib.getExe config.system.build.legacyFlashScript} \
+          --firmware ${pkgs.nvidia-jetpack.flashFirmware} "$@"
+      '';
+    };
 in
 {
   flake = {
@@ -759,7 +774,16 @@ in
     );
 
     packages = {
-      aarch64-linux = builtins.listToAttrs (map (t: lib.nameValuePair t.name t.package) targets);
+      aarch64-linux =
+        builtins.listToAttrs (map (t: lib.nameValuePair t.name t.package) targets)
+        // builtins.listToAttrs (
+          map (
+            t:
+            lib.nameValuePair "${t.name}-flash-with-image" (
+              lazyPackage "${t.name}-flash-with-image" (flashWithImage t)
+            )
+          ) (builtins.filter (t: t.useLegacyFlash or false) targets)
+        );
       x86_64-linux =
         builtins.listToAttrs (map (t: lib.nameValuePair t.name t.package) crossTargets)
         // builtins.listToAttrs (

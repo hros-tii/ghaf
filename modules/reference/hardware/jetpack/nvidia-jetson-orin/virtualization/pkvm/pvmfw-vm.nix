@@ -50,7 +50,7 @@ let
   # Guest-to-guest agent and its whitelist. Both ride in the initrd, which the
   # AVB footer covers; the rootfs is not authenticated. Static, so it loads
   # nothing from the guest's /nix/store at run time.
-  g2gAgent = pkgs.pkgsStatic.callPackage ./g2g-agent { };
+  g2gEcho = pkgs.pkgsStatic.callPackage ./libg2g { };
   g2gPeers = pkgs.writeText "g2g-peers" ''
     # The VMs this one exchanges guest-to-guest messages with.
     admin-vm
@@ -73,32 +73,22 @@ in
   # Stage 1 copies the agent and the peers out of the signed initrd into /run,
   # which systemd keeps across switch-root.
   boot.initrd.systemd.storePaths = [
-    "${g2gAgent}/bin/g2g-agent"
+    "${g2gEcho}/bin/g2g-echo"
     g2gPeers
     "${pkgs.coreutils}/bin/install"
   ];
   boot.initrd.systemd.services.g2g-stage = {
-    description = "Copy the g2g agent and its peers out of the signed initrd";
+    description = "Copy g2g-echo and the g2g peers out of the signed initrd";
     wantedBy = [ "initrd.target" ];
     before = [ "initrd-switch-root.target" ];
     unitConfig.DefaultDependencies = false;
     serviceConfig = {
       Type = "oneshot";
       ExecStart = [
-        "${pkgs.coreutils}/bin/install -D -m 0500 ${g2gAgent}/bin/g2g-agent /run/g2g/g2g-agent"
+        "${pkgs.coreutils}/bin/install -D -m 0500 ${g2gEcho}/bin/g2g-echo /run/g2g/g2g-echo"
         "${pkgs.coreutils}/bin/install -D -m 0400 ${g2gPeers} /run/g2g/peers"
       ];
     };
   };
 
-  systemd.services.g2g-agent = {
-    description = "Guest-to-guest agent";
-    wantedBy = [ "multi-user.target" ];
-    unitConfig.ConditionPathExists = "/run/g2g/g2g-agent";
-    serviceConfig = {
-      ExecStart = "/run/g2g/g2g-agent /run/g2g/peers";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-  };
 }

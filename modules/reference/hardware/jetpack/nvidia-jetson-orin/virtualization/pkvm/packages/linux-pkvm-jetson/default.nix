@@ -18,14 +18,14 @@ nvidia-jetpack7.kernel.override {
     args
     // {
       pname = "linux-pkvm-jetson";
-      version = "6.18.0";
-      extraMeta.branch = "pkvm-v6.18-dev";
+      version = "6.18.63";
+      extraMeta.branch = "pkvm-stable-dev";
 
       src = fetchFromGitHub {
         owner = "tiiuae";
         repo = "linux-pkvm-jetson";
-        rev = "635111311b0977bf463ffe1174bbd69041bde66f"; # pkvm-6.18-dev - 07-10-2026
-        hash = "sha256-tF4oyAqWZ56mVUIY1sMQfaacw3ESmJ5Op6KHP+uhsZU=";
+        rev = "81fc753cba29e002a383b377ae2c363d45f70666"; # pkvm-stable-dev - 26-10-2026
+        hash = "sha256-bnLcx27SYJ/jr3vf74ZhbIH4VjAxjPfuuHm1SvjP6RU=";
       };
     }
     // argsOverride;

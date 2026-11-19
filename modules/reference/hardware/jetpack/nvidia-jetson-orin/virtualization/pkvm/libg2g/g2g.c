@@ -11,6 +11,8 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include <openssl/sha.h>
@@ -327,6 +329,8 @@ static int load_peers(struct g2g *g, const char *path)
 	return ret;
 }
 
+static void guard_sigbus(void);
+
 int g2g_open(struct g2g **gp, const char *peers_path)
 {
 	struct g2g *g = calloc(1, sizeof(*g));
@@ -335,6 +339,7 @@ int g2g_open(struct g2g **gp, const char *peers_path)
 	if (!g)
 		return -ENOMEM;
 	g->fd = -1;
+	guard_sigbus();
 	if (read_auth_hash("/dev/open-dice0", g->auth)) {
 		ret = -ENODEV;
 		goto fail;
@@ -764,6 +769,80 @@ size_t g2g_chan_max_record(const struct g2g_chan *c)
 	return max < G2G_MAX_RECORD ? max : G2G_MAX_RECORD;
 }
 
+/*
+ * The owner can take a channel's pages back at any moment (a client that
+ * exits or crashes without closing has them revoked when its file closes),
+ * and the borrower's next access then raises SIGBUS. Ring accesses run under
+ * this handler, which turns that SIGBUS into -EPIPE for the channel instead of
+ * killing the process. A SIGBUS anywhere else gets the previous handler.
+ */
+static __thread sigjmp_buf *ring_jmp;
+static struct sigaction old_sigbus;
+
+static void on_sigbus(int sig, siginfo_t *si, void *uc)
+{
+	if (ring_jmp)
+		siglongjmp(*ring_jmp, 1);
+	if (old_sigbus.sa_flags & SA_SIGINFO) {
+		old_sigbus.sa_sigaction(sig, si, uc);
+	} else if (old_sigbus.sa_handler != SIG_IGN && old_sigbus.sa_handler != SIG_DFL) {
+		old_sigbus.sa_handler(sig);
+	} else {
+		signal(SIGBUS, SIG_DFL);
+		raise(SIGBUS);
+	}
+}
+
+static void guard_sigbus(void)
+{
+	static int done;
+	struct sigaction sa = { .sa_sigaction = on_sigbus, .sa_flags = SA_SIGINFO };
+
+	if (done)
+		return;
+	sigemptyset(&sa.sa_mask);
+	if (!sigaction(SIGBUS, &sa, &old_sigbus))
+		done = 1;
+}
+
+static int ring_put_guarded(struct g2g_ring *r, const void *buf, uint32_t len)
+{
+	sigjmp_buf jb;
+	int ret;
+
+	if (sigsetjmp(jb, 1)) {
+		ring_jmp = NULL;
+		return -EPIPE;
+	}
+	ring_jmp = &jb;
+	ret = g2g_ring_put(r, buf, len);
+	ring_jmp = NULL;
+	return ret;
+}
+
+static ssize_t ring_get_guarded(struct g2g_ring *r, void *buf, size_t cap)
+{
+	sigjmp_buf jb;
+	ssize_t ret;
+
+	if (sigsetjmp(jb, 1)) {
+		ring_jmp = NULL;
+		return -EPIPE;
+	}
+	ring_jmp = &jb;
+	ret = g2g_ring_get(r, buf, cap);
+	ring_jmp = NULL;
+	return ret;
+}
+
+/* The pages are gone: forget them without touching them again. */
+static int chan_lost(struct g2g_chan *c)
+{
+	c->dead = 1;
+	chan_unmap(c);
+	return -EPIPE;
+}
+
 /* A broken ring means a misbehaving peer: close the channel. */
 static int chan_fail(struct g2g_chan *c, int err)
 {
@@ -782,7 +861,9 @@ int g2g_chan_send(struct g2g_chan *c, const void *buf, size_t len, int timeout_m
 		return -EMSGSIZE;
 	wait_init(&w, timeout_ms);
 	for (;;) {
-		ret = g2g_ring_put(&c->tx, buf, len);
+		ret = ring_put_guarded(&c->tx, buf, len);
+		if (ret == -EPIPE)
+			return chan_lost(c);
 		if (ret != -EAGAIN)
 			return ret == -EPROTO ? chan_fail(c, ret) : ret;
 		ret = chan_check(c);
@@ -802,7 +883,9 @@ ssize_t g2g_chan_recv(struct g2g_chan *c, void *buf, size_t cap, int timeout_ms)
 		return -EPIPE;
 	wait_init(&w, timeout_ms);
 	for (;;) {
-		ret = g2g_ring_get(&c->rx, buf, cap);
+		ret = ring_get_guarded(&c->rx, buf, cap);
+		if (ret == -EPIPE)
+			return chan_lost(c);
 		if (ret != -EAGAIN)
 			return ret < 0 ? chan_fail(c, ret) : ret;
 		ret = chan_check(c);

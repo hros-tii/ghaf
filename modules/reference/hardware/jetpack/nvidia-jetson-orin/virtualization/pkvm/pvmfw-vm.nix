@@ -68,7 +68,10 @@ in
     "--device-tree-overlay"
     "/persist/pvmfw/${name}/instance_id.dtbo"
   ];
-  environment.systemPackages = [ (pkgs.callPackage ./g2g-demo { }) ];
+  environment.systemPackages = [
+    (pkgs.callPackage ./g2g-demo { })
+    (pkgs.callPackage ./g2g-cuda { })
+  ];
 
   # Stage 1 copies the agent and the peers out of the signed initrd into /run,
   # which systemd keeps across switch-root.

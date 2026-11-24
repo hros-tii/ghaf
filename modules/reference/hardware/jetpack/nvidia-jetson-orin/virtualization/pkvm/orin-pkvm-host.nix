@@ -15,6 +15,9 @@ let
 
     structuredExtraConfig = with lib.kernel; {
       VIRTIO_FS = module;
+      VSOCKETS = module;
+      VIRTIO_VSOCKETS = module;
+      VHOST_VSOCK = module;
       TCG_TIS = module;
       RTW89 = module;
       RTW89_8852CE = module;

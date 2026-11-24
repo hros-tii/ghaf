@@ -142,25 +142,29 @@ in
       boot = {
         plymouth.enable = true;
 
-        # Hide boot log from user completely
-        kernelParams = [
-          "quiet"
-          "udev.log_priority=3"
-        ]
-        ++ optionals cfg.debug [ "plymouth.debug" ]
-        # Disables loading the UEFI logo from firmware to /sys/firmware/acpi/bgrt
-        ++ optionals cfg.firmwareLogo.enable [ "bgrt_disable=1" ]
-        ++ (
-          if cfg.renderer == "simpledrm" then
-            [ "plymouth.use-simpledrm" ]
-          else
-            [
-              "plymouth.use-simpledrm=0"
-              "plymouth.ignore-serial-consoles"
-            ]
-        );
-        consoleLogLevel = mkDefault 0;
-        initrd.verbose = false;
+        kernelParams =
+          (
+            if cfg.debug then
+              [ "plymouth.debug" ]
+            else
+              [
+                "quiet"
+                "udev.log_priority=3"
+              ]
+          )
+          # Disables loading the UEFI logo from firmware to /sys/firmware/acpi/bgrt
+          ++ optionals cfg.firmwareLogo.enable [ "bgrt_disable=1" ]
+          ++ (
+            if cfg.renderer == "simpledrm" then
+              [ "plymouth.use-simpledrm" ]
+            else
+              [
+                "plymouth.use-simpledrm=0"
+                "plymouth.ignore-serial-consoles"
+              ]
+          );
+        consoleLogLevel = mkDefault 3; # KERN_ERR
+        initrd.verbose = cfg.debug;
       };
       systemd.services.plymouth-quit = {
         after = mkIf (cfg.waitForService != null && cfg.waitForService != "") [ cfg.waitForService ];

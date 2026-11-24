@@ -61,6 +61,7 @@ in
     "clk_ignore_unused"
     "pd_ignore_unused"
   ];
+  boot.consoleLogLevel = 3;
 
   hardware.enableAllHardware = false;
   boot.initrd.includeDefaultModules = false;

@@ -4,6 +4,8 @@
 # Flake module for exporting overlays
 { inputs, ... }: {
   flake.overlays = {
+    ccache = import ./development/ccache.nix;
+
     cross-compilation = import ./cross-compilation;
     custom-packages = import ./custom-packages;
     crosvm =

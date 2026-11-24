@@ -12,13 +12,16 @@
     ./agx-netvm-wlan-pci-passthrough.nix
   ];
 
-  # jetpack-nixos' EDK2/UEFI firmware build needs a setuptools that still ships
-  # pkg_resources. That acts on pythonPackagesExtensions, i.e. on every Python
-  # package in the instance, so it is scoped to the Jetson targets rather than
-  # living in overlays.default -- globally it breaks packages that need a newer
-  # setuptools (see overlays/jetpack-python/default.nix).
   nixpkgs.overlays = [
+    # jetpack-nixos' EDK2/UEFI firmware build needs a setuptools that still ships
+    # pkg_resources. That acts on pythonPackagesExtensions, i.e. on every Python
+    # package in the instance, so it is scoped to the Jetson targets rather than
+    # living in overlays.default -- globally it breaks packages that need a newer
+    # setuptools (see overlays/jetpack-python/default.nix).
     self.overlays.jetpack-python
+
+    # Cache compiled objects. Used in kernel builds
+    self.overlays.ccache
   ];
 
   # NVIDIA's L4T udev rules give the GPU debug/profiling nodes to a "debug" group

@@ -7,6 +7,7 @@
 {
   nvidia-jetpack7,
   fetchFromGitHub,
+  ccacheStdenv,
   structuredExtraConfig ? { },
   argsOverride ? { },
   ...
@@ -27,6 +28,8 @@ nvidia-jetpack7.kernel.override {
         rev = "81fc753cba29e002a383b377ae2c363d45f70666"; # pkvm-stable-dev - 26-10-2026
         hash = "sha256-bnLcx27SYJ/jr3vf74ZhbIH4VjAxjPfuuHm1SvjP6RU=";
       };
+
+      stdenv = ccacheStdenv;
     }
     // argsOverride;
 }

@@ -29,6 +29,13 @@ nvidia-jetpack7.kernel.override {
         hash = "sha256-bnLcx27SYJ/jr3vf74ZhbIH4VjAxjPfuuHm1SvjP6RU=";
       };
 
+      kernelPatches = [
+        {
+          name = "Fix smmu domain realloc";
+          patch = ./test-smmu-alloc.patch;
+        }
+      ];
+
       stdenv = ccacheStdenv;
     }
     // argsOverride;

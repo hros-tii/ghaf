@@ -1,0 +1,16 @@
+diff --git a/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c b/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
+index f03864f42f4f..2f06569e2847 100644
+--- a/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
++++ b/drivers/iommu/arm/arm-smmu/pkvm/arm-smmu-v2-pkvm.c
+@@ -2614,8 +2614,10 @@ static int smmu_domain_alloc(pkvm_handle_t iommu,
+ 		return -EINVAL;
+ 
+ 	smmu_domain = hyp_alloc(sizeof(*smmu_domain));
+-	if (!smmu_domain)
++	if (!smmu_domain) {
++		kvm_iommu_request_hyp_alloc();
+ 		return -ENOMEM;
++	}
+ 
+ 	hyp_spin_lock(&smmu->lock);
+ 

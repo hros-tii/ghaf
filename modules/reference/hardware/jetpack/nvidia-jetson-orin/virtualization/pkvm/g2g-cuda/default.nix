@@ -32,4 +32,9 @@ stdenv.mkDerivation {
     ln -s libcuda.so.1 $out/lib/g2g-cuda/libcuda.so
     runHook postInstall
   '';
+  # After the fixup phase shrinks RPATHs: libcuda.so.1 is dlopen()ed, so the
+  # driver directory would otherwise be dropped.
+  postFixup = ''
+    patchelf --add-rpath /run/opengl-driver/lib $out/bin/g2g-vecadd
+  '';
 }

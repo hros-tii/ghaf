@@ -66,6 +66,7 @@
           adminvm.extraModules = [
             guestConfig
             (import ./pvmfw-vm.nix "admin-vm")
+            (import ./g2g-cuda.nix "client")
             {
               microvm.kernelParams = [
                 "ignore_loglevel"
@@ -77,11 +78,9 @@
           guivm.extraModules = [
             guestConfig
             (import ./pvmfw-vm.nix "gui-vm")
+            (import ./g2g-cuda.nix "server")
             {
               microvm.kernelParams = [
-                "ignore_loglevel"
-                "earlycon=uart8250,mmio,0x3f8"
-                "keep_bootcon"
               ];
             }
           ];

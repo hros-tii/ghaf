@@ -23,6 +23,7 @@
   intel-gpu-tools = import ./intel-gpu-tools { inherit prev; };
   libsForQt5 = import ./libsForQt5 { inherit prev; };
   mbrola-voices = import ./mbrola-voices { inherit prev; };
+  ollama-cuda = import ./ollama-cuda { inherit prev; };
   osquery-with-hostname = import ./osquery-with-hostname { inherit prev; };
   papirus-icon-theme = import ./papirus-icon-theme { inherit prev; };
   qt6Packages = import ./qt6Packages { inherit prev; };

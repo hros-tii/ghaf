@@ -30,6 +30,10 @@
                 "NV_OOT_REALTEK_RTL8852CE_SKIP_BUILD=y"
               ];
 
+            patches = (oldAttrs.patches or [ ]) ++ [
+              ./0003-nvgpu-use-unlocked-dma-buf-map-helpers-on-6.2.patch
+            ];
+
             postPatch = (oldAttrs.postPatch or "") + ''
               if ! grep -q rtk_set_quirk nvidia-oot/drivers/bluetooth/realtek/rtk_bt.h; then
                 patch -p1 -d nvidia-oot < ${./0002-rtk_btusb-Fix-for-kernel-6.16.patch}

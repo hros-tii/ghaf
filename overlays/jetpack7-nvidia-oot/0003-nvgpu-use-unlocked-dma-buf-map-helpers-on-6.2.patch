@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hugo Ros <Hugo.Ros@tii.ae>
+Date: Wed, 25 Nov 2026 12:00:00 +0200
+Subject: [PATCH] nvgpu: use unlocked dma-buf map helpers on 6.2+
+
+Since Linux 6.2, dma_buf_map_attachment() and dma_buf_unmap_attachment()
+require the caller to hold the dma-buf reservation lock. nvgpu_mm_pin()
+and nvgpu_mm_unpin() call them without it, which triggers a lockdep warning
+for every GPU map/unmap.
+Use the _unlocked variants that take the lock.
+
+---
+diff --git a/nvgpu/drivers/gpu/nvgpu/os/linux/dmabuf_priv.c b/nvgpu/drivers/gpu/nvgpu/os/linux/dmabuf_priv.c
+--- a/nvgpu/drivers/gpu/nvgpu/os/linux/dmabuf_priv.c
++++ b/nvgpu/drivers/gpu/nvgpu/os/linux/dmabuf_priv.c
+@@ -189,7 +189,11 @@
+ 		return ERR_CAST(attach);
+ 	}
+
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
++	sgt = dma_buf_map_attachment_unlocked(attach, direction);
++#else
+ 	sgt = dma_buf_map_attachment(attach, direction);
++#endif
+ 	if (IS_ERR(sgt)) {
+ 		dma_buf_detach(dmabuf, attach);
+ 		nvgpu_err(g, "Failed to map attachment (err = %ld)!",
+@@ -207,7 +211,11 @@
+ 			struct dma_buf_attachment *attachment,
+ 			struct sg_table *sgt)
+ {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
++	dma_buf_unmap_attachment_unlocked(attachment, sgt, DMA_BIDIRECTIONAL);
++#else
+ 	dma_buf_unmap_attachment(attachment, sgt, DMA_BIDIRECTIONAL);
++#endif
+ 	dma_buf_detach(dmabuf, attachment);
+ }
+
+--
+2.51.0

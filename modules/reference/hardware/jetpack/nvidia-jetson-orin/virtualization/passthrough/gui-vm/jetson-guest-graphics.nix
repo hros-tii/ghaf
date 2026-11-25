@@ -141,7 +141,10 @@
     '';
 
     environment.systemPackages =
-      (with pkgs.nvidia-jetpack; [
+      (with pkgs; [
+        ollama-cuda
+      ])
+      ++ (with pkgs.nvidia-jetpack; [
         l4t-tools
         l4t-bootloader-utils
         l4t-cuda

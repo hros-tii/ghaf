@@ -1,0 +1,52 @@
+diff --git a/drivers/virt/coco/pkvm-guest/arm-pkvm-guest.c b/drivers/virt/coco/pkvm-guest/arm-pkvm-guest.c
+--- a/drivers/virt/coco/pkvm-guest/arm-pkvm-guest.c
++++ b/drivers/virt/coco/pkvm-guest/arm-pkvm-guest.c
+@@ -16,6 +16,7 @@
+ #include <linux/pgtable.h>
+ #include <linux/virtio_balloon.h>
+ 
++#include <asm/fixmap.h>
+ #include <asm/hypervisor.h>
+ 
+ static size_t pkvm_granule;
+@@ -191,6 +192,31 @@
+ 	return IS_ALIGNED(region->base + region->size, pkvm_granule);
+ }
+ 
++/*
++ * earlycon is mapped through the fixmap before MMIO guard enrolment, so the
++ * ioremap hook never sees it. Map it right after enrolling, before the next
++ * printk reaches the UART, or that access faults and the guest deadlocks.
++ */
++static void mmio_guard_map_earlycon(void)
++{
++	unsigned long addr = __fix_to_virt(FIX_EARLYCON_MEM_BASE);
++	u32 func_id = pkvm_func_range ?
++		ARM_SMCCC_VENDOR_HYP_KVM_MMIO_RGUARD_MAP_FUNC_ID :
++		ARM_SMCCC_VENDOR_HYP_KVM_MMIO_GUARD_MAP_FUNC_ID;
++	pmd_t *pmdp = pmd_off_k(addr);
++	pte_t pte;
++
++	if (pmd_none(READ_ONCE(*pmdp)))
++		return;
++
++	pte = __ptep_get(pte_offset_kernel(pmdp, addr));
++	if (!pte_present(pte))
++		return;
++
++	arm_smccc_do_range(func_id, ALIGN_DOWN(PFN_PHYS(pte_pfn(pte)), pkvm_granule),
++			   pkvm_granule >> PAGE_SHIFT, pkvm_func_range);
++}
++
+ void pkvm_init_hyp_services(void)
+ {
+ 	struct arm_smccc_res res;
+@@ -218,6 +244,8 @@
+ 	WARN_ON(!kvm_arm_hyp_service_available(ARM_SMCCC_KVM_FUNC_MMIO_GUARD_ENROLL));
+ 	memset(&res, 0, sizeof(res));
+ 	arm_smccc_1_1_invoke(ARM_SMCCC_VENDOR_HYP_KVM_MMIO_GUARD_ENROLL_FUNC_ID, &res);
++	if ((long)res.a0 >= 0)
++		mmio_guard_map_earlycon();
+ 	WARN_ON((long)res.a0 < 0);
+ 
+ 	if (!kvm_arm_hyp_service_available(ARM_SMCCC_KVM_FUNC_MMIO_GUARD_MAP)) {

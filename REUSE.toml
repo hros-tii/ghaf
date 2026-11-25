@@ -35,6 +35,7 @@ path = [
   "modules/microvm/sysvms/idsvm/mitmproxy/mitmproxy-ca/*",
   "modules/reference/hardware/jetpack/0001-ARM-SMMU-drivers-return-always-true-for-IOMMU_CAP_CA.patch",
   "modules/reference/hardware/jetpack/nvidia-jetson-orin/virtualization/pkvm/packages/crosvm/0001-vhost-user-handle-ACCESS_PLATFORM-for-protected-guest.patch",
+  "modules/reference/hardware/jetpack/nvidia-jetson-orin/virtualization/pkvm/packages/linux-pkvm-jetson/pkvm-guest-mmio-guard-earlycon.patch",
   "packages/pkgs-by-name/ghaf-intro/**/*.png",
   "overlays/custom-packages/cosmic/**/*.patch",
   "overlays/custom-packages/system76-scheduler/0001-fix-add-missing-loop-in-process-scheduler-refresh-ta.patch",

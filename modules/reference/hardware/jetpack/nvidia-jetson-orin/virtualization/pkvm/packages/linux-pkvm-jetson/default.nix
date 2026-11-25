@@ -34,6 +34,10 @@ nvidia-jetpack7.kernel.override {
           name = "Fix smmu domain realloc";
           patch = ./test-smmu-alloc.patch;
         }
+        {
+          name = "pkvm guest: MMIO-guard-map earlycon";
+          patch = ./pkvm-guest-mmio-guard-earlycon.patch;
+        }
       ];
 
       stdenv = ccacheStdenv;

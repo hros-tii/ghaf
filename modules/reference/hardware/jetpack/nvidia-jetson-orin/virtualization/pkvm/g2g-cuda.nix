@@ -8,12 +8,9 @@
 #   role = "client": an app VM. The g2g-cuda shim is this VM's libcuda.so.1,
 #                    so every CUDA application loads it with no setup.
 #
-# Both roles give /dev/pkvm-g2g (mailbox and shared pages) and /dev/open-dice0
-# (this VM's identity) to the group g2g. open-dice0 is read-only for the
-# group: a write to it wipes the DICE secrets.
+# Not used together with g2g-ollama.nix: the g2g mailbox is one per VM.
 role:
 {
-  config,
   lib,
   pkgs,
   ...
@@ -22,17 +19,9 @@ let
   g2gCuda = pkgs.callPackage ./g2g-cuda { };
 in
 {
-  config = lib.mkMerge [
-    {
-      users.groups.g2g = { };
-      # The initrd stages the peers file (the whitelist) root-only.
-      systemd.tmpfiles.rules = [ "z /run/g2g/peers 0440 root g2g -" ];
-      services.udev.extraRules = ''
-        KERNEL=="pkvm-g2g", GROUP="g2g", MODE="0660"
-        KERNEL=="open-dice0", GROUP="g2g", MODE="0640"
-      '';
-    }
+  imports = [ ./g2g-access.nix ];
 
+  config = lib.mkMerge [
     (lib.mkIf (role == "server") {
       users.groups.g2g-cuda = { };
       users.users.g2g-cuda = {

@@ -66,7 +66,7 @@
           adminvm.extraModules = [
             guestConfig
             (import ./pvmfw-vm.nix "admin-vm")
-            (import ./g2g-cuda.nix "client")
+            (import ./g2g-ollama.nix "client")
             {
               microvm.kernelParams = [
                 "ignore_loglevel"
@@ -78,7 +78,7 @@
           guivm.extraModules = [
             guestConfig
             (import ./pvmfw-vm.nix "gui-vm")
-            (import ./g2g-cuda.nix "server")
+            (import ./g2g-ollama.nix "server")
             {
               microvm.kernelParams = [
               ];

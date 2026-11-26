@@ -79,6 +79,7 @@
             guestConfig
             (import ./pvmfw-vm.nix "gui-vm")
             (import ./g2g-ollama.nix "server")
+            ./ollama-gui-vm.nix
             {
               microvm.kernelParams = [
               ];
